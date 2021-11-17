@@ -22,3 +22,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::post('login', [EnrollmentController::class, 'login']);
 Route::post('register', [EnrollmentController::class, 'register']);
 Route::post('reset-password', [EnrollmentController::class, 'resetPassword']);
+
+Route::get('get-all-enrollment', [EnrollmentController::class, 'getAllEnrollment']);
+Route::get('get-enrollment', [EnrollmentController::class, 'getEnrollment']);
+Route::get('search-enrollment', [EnrollmentController::class, 'searchEnrollment']);

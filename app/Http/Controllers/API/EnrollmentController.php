@@ -2,18 +2,15 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
-use App\Models\Enrollment;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Validator;
-
-use App\Models\User;
 use App\Models\Logs;
-use Flash;
-use Response;
+use App\Models\User;
+use App\Models\Enrollment;
+
+use Illuminate\Support\Str;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class EnrollmentController extends Controller {
 
@@ -28,22 +25,19 @@ class EnrollmentController extends Controller {
             $success['id'] = $user->id;
             $success['name'] = $user->name;
 
-            $log = new Logs;
-            $log->userid = $user->id;
-            $log->log = "Login";
-            $log->logdetails = "User $user->username has logged in into my system";
-            $log->logtype = "API Login";
-            $log->save();
-
             // SAVE TOKEN
             $user->remember_token = $success['token'];
             $user->save();
+           
+
+            // create an instance of logs model
             
             $logs = new Logs();
+
             $logs->userid = $user->id;
             $logs->log = "Login";
-            $logs->logdetails = "User $user->name has logged in to my system";
-            $logs->logtype = "API login";
+            $logs->logdetails = "User $user->username has logged in successfully into my system.";
+            $logs->logtype = "API Login";
             $logs->save();
 
             return response()->json($success, $this->successStatus);
@@ -94,6 +88,63 @@ class EnrollmentController extends Controller {
         } else {
             return response()->json(['response' => 'User not found'], 404);
         }
+    }
+    
+    public function getAllEnrollment(Request $request) {
+        $token = $request['t']; // t = token
+        $userid = $request['u']; // u = userid
+
+        $user = User::where('id', $userid)->where('remember_token', $token)->first();
+
+        if ($user != null) {
+            $enrollment = Enrollment::all();
+
+            return response()->json($enrollment, $this->successStatus);
+        } else {
+            return response()->json(['response' => 'Bad Call'], 501);
+        }        
+    }  
+    
+    public function getEnrollment(Request $request) {
+        $id = $request['pid']; // pid = enrollmentid
+        $token = $request['t']; // t = token
+        $userid = $request['u']; // u = userid
+
+        $user = User::where('id', $userid)->where('remember_token', $token)->first();
+
+        if ($user != null) {
+            $enrollment= Enrollment::where('id', $id)->first();
+
+            if ($enrollment!= null) {
+                return response()->json($enrollment, $this->successStatus);
+            } else {
+                return response()->json(['response' => 'Enrollment not found!'], 404);
+            }            
+        } else {
+            return response()->json(['response' => 'Bad Call'], 501);
+        }  
+    }
+
+    public function searchEnrollment(Request $request) {
+        $params = $request['p']; // p = params
+        $token = $request['t']; // t = token
+        $userid = $request['u']; // u = userid
+
+        $user = User::where('id', $userid)->where('remember_token', $token)->first();
+
+        if ($user != null) {
+            $enrollment= Enrollment::where('religion', 'LIKE', '%' . $params . '%')
+                ->orWhere('citizenship', 'LIKE', '%' . $params . '%')
+                ->get();
+            
+            if ($enrollment!= null) {
+                return response()->json($enrollment, $this->successStatus);
+            } else {
+                return response()->json(['response' => 'enrollmentnot found!'], 404);
+            }            
+        } else {
+            return response()->json(['response' => 'Bad Call'], 501);
+        }  
     }
 }
 
